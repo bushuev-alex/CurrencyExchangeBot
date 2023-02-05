@@ -1,6 +1,6 @@
 import telebot
-from config import TOKEN, currencies
-from extensions import CryptoConverter, APIException
+from config import TOKEN
+from extensions import CryptoConverter, Currency, APIException
 import redis
 
 
@@ -26,23 +26,22 @@ def handle_help(message: telebot.types.Message):
 @bot.message_handler(commands=["values"])
 def handle_values(message: telebot.types.Message):
     text = "Available currencies:\n\n"
-    for abbreviation, full_name in currencies.items():
+    for abbreviation, full_name in Currency.currencies.items():
         text += f' {abbreviation} - {full_name}\n'
     bot.reply_to(message, text)
 
 
 @bot.message_handler(commands=["popular_currencies"])
-def pop_currencies(message: telebot.types.Message):
+def get_popular_currencies(message: telebot.types.Message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    # pairs = list(combinations(Currency.currencies.keys(), 2))
-    # buttons = [telebot.types.KeyboardButton(' '.join(pair) + " 1") for pair in pairs]
     if len(red.keys()) <= 6:
         buttons = [telebot.types.KeyboardButton(key.decode() + " 1") for key in red.keys()]
+        markup.add(*buttons)
     if len(red.keys()) > 6:
         pairs = [(int((red.get(key).decode())), key.decode()) for key in red.keys()]
         pairs.sort(reverse=True)
-        buttons = [pair[1] + " 1" for pair in pairs]
-    markup.add(*buttons[:6])
+        buttons = [telebot.types.KeyboardButton(pair[1] + " 1") for pair in pairs]
+        markup.add(*buttons[:6])
     bot.send_message(message.from_user.id, "Popular currencies", reply_markup=markup)
 
 
@@ -60,8 +59,8 @@ def convert(message: telebot.types.Message):
         bot.reply_to(message, f"Wrong command. Unable to continue.\n{e}")
     else:
         text = f"Pricing {amount} " \
-               f"{currencies.get(quote)} ({quote}) in " \
-               f"{currencies.get(base)} ({base}) - {round(price, 2)}"
+               f"{Currency.currencies.get(quote)} ({quote}) in " \
+               f"{Currency.currencies.get(base)} ({base}) - {round(price, 2)}"
         bot.send_message(message.chat.id, text)
 
         redis_data = red.get(f"{quote} {base}")
