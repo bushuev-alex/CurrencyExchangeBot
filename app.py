@@ -19,7 +19,7 @@ def handle_start_help(message: telebot.types.Message):
            "Example:\n\nEUR USD 1\n\n" \
            "/help - instructions.\n" \
            "/values - available currencies\n" \
-           "/popular_currencies - top 6 hottest pair queries"
+           "/popular_currencies - top 6 hottest pairs queries"
     bot.reply_to(message, text)
 
 
