@@ -9,9 +9,9 @@ bot = telebot.TeleBot(TOKEN)
 
 
 @bot.message_handler(commands=['start', 'help'])
-def handle_help(message: telebot.types.Message):
+def handle_start_help(message: telebot.types.Message):
     text = f"HELLO, {message.chat.username}!\n" \
-           "I'm bot where You can convert currencies!\n\n" \
+           "I'm ChatBot where You can convert currencies!\n\n" \
            "Insert currencies to exchange in following format (in one line): \n" \
            "<currency to get> " \
            "<currency to exchange> " \
@@ -19,7 +19,7 @@ def handle_help(message: telebot.types.Message):
            "Example:\n\nEUR USD 1\n\n" \
            "/help - instructions.\n" \
            "/values - available currencies\n" \
-           "/popular_currencies - 6 hottest queries"
+           "/popular_currencies - top 6 hottest pair queries"
     bot.reply_to(message, text)
 
 
