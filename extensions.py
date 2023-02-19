@@ -1,6 +1,6 @@
 import requests
 import json
-from config import APILAYER_API_KEY
+from config import APILAYER_API_KEY, OPENEXCHANGERATES_API
 from pprint import pprint
 
 
@@ -14,14 +14,14 @@ class CryptoConverter:
         pass
 
     @staticmethod
-    def get_price(quote: str, base: str, amount: str):
+    def get_price(quote: str, base: str):
         if quote == base:
             raise APIException(f"Impossible to exchange equal currencies ({quote} vs {base})")
 
-        URL = f"https://api.apilayer.com/currency_data/convert?to={base}&from={quote}&amount={amount}"
-        headers = {"apikey": APILAYER_API_KEY}
+        URL = f"https://api.exchangerate.host/convert?from={quote}&to={base}"
 
-        r = requests.get(url=URL, headers=headers)
+        r = requests.get(URL)
+        # print(json.loads(r.content))
         if r.status_code == 200:
             if json.loads(r.content).get("success"):
                 return json.loads(r.content).get("result")
@@ -29,6 +29,13 @@ class CryptoConverter:
                 raise APIException(json.loads(r.content)["error"]["info"])
         else:
             raise APIException(json.loads(r.content)["message"])
+
+    @staticmethod
+    def get_currencies():
+        url = 'https://api.exchangerate.host/symbols'
+        response = requests.get(url)
+        data = response.json()
+        return data['symbols']
 
 
 class Currency:
@@ -55,15 +62,16 @@ class Currency:
                   'BSD': 'Bahamian Dollar',
                   'BTC': 'Bitcoin',
                   'BTN': 'Bhutanese Ngultrum',
+                  'BTS': 'BitShares',
                   'BWP': 'Botswanan Pula',
-                  'BYN': 'New Belarusian Ruble',
-                  'BYR': 'Belarusian Ruble',
+                  'BYN': 'Belarusian Ruble',
                   'BZD': 'Belize Dollar',
                   'CAD': 'Canadian Dollar',
                   'CDF': 'Congolese Franc',
                   'CHF': 'Swiss Franc',
                   'CLF': 'Chilean Unit of Account (UF)',
                   'CLP': 'Chilean Peso',
+                  'CNH': 'Chinese Yuan (Offshore)',
                   'CNY': 'Chinese Yuan',
                   'COP': 'Colombian Peso',
                   'CRC': 'Costa Rican Colón',
@@ -71,16 +79,23 @@ class Currency:
                   'CUP': 'Cuban Peso',
                   'CVE': 'Cape Verdean Escudo',
                   'CZK': 'Czech Republic Koruna',
+                  'DASH': 'Dash',
                   'DJF': 'Djiboutian Franc',
                   'DKK': 'Danish Krone',
+                  'DOGE': 'DogeCoin',
                   'DOP': 'Dominican Peso',
                   'DZD': 'Algerian Dinar',
+                  'EAC': 'EarthCoin',
                   'EGP': 'Egyptian Pound',
+                  'EMC': 'Emercoin',
                   'ERN': 'Eritrean Nakfa',
                   'ETB': 'Ethiopian Birr',
+                  'ETH': 'Ethereum',
                   'EUR': 'Euro',
+                  'FCT': 'Factom',
                   'FJD': 'Fijian Dollar',
                   'FKP': 'Falkland Islands Pound',
+                  'FTC': 'Feathercoin',
                   'GBP': 'British Pound Sterling',
                   'GEL': 'Georgian Lari',
                   'GGP': 'Guernsey Pound',
@@ -117,11 +132,11 @@ class Currency:
                   'KZT': 'Kazakhstani Tenge',
                   'LAK': 'Laotian Kip',
                   'LBP': 'Lebanese Pound',
+                  'LD': 'Linden Dollar',
                   'LKR': 'Sri Lankan Rupee',
                   'LRD': 'Liberian Dollar',
                   'LSL': 'Lesotho Loti',
-                  'LTL': 'Lithuanian Litas',
-                  'LVL': 'Latvian Lats',
+                  'LTC': 'LiteCoin',
                   'LYD': 'Libyan Dinar',
                   'MAD': 'Moroccan Dirham',
                   'MDL': 'Moldovan Leu',
@@ -130,7 +145,7 @@ class Currency:
                   'MMK': 'Myanma Kyat',
                   'MNT': 'Mongolian Tugrik',
                   'MOP': 'Macanese Pataca',
-                  'MRO': 'Mauritanian Ouguiya',
+                  'MRU': 'Mauritanian Ouguiya',
                   'MUR': 'Mauritian Rupee',
                   'MVR': 'Maldivian Rufiyaa',
                   'MWK': 'Malawian Kwacha',
@@ -140,8 +155,11 @@ class Currency:
                   'NAD': 'Namibian Dollar',
                   'NGN': 'Nigerian Naira',
                   'NIO': 'Nicaraguan Córdoba',
+                  'NMC': 'Namecoin',
                   'NOK': 'Norwegian Krone',
                   'NPR': 'Nepalese Rupee',
+                  'NVC': 'NovaCoin',
+                  'NXT': 'Nxt',
                   'NZD': 'New Zealand Dollar',
                   'OMR': 'Omani Rial',
                   'PAB': 'Panamanian Balboa',
@@ -150,6 +168,7 @@ class Currency:
                   'PHP': 'Philippine Peso',
                   'PKR': 'Pakistani Rupee',
                   'PLN': 'Polish Zloty',
+                  'PPC': 'Peercoin',
                   'PYG': 'Paraguayan Guarani',
                   'QAR': 'Qatari Rial',
                   'RON': 'Romanian Leu',
@@ -163,11 +182,13 @@ class Currency:
                   'SEK': 'Swedish Krona',
                   'SGD': 'Singapore Dollar',
                   'SHP': 'Saint Helena Pound',
-                  'SLE': 'Sierra Leonean Leone',
                   'SLL': 'Sierra Leonean Leone',
                   'SOS': 'Somali Shilling',
                   'SRD': 'Surinamese Dollar',
-                  'STD': 'São Tomé and Príncipe Dobra',
+                  'SSP': 'South Sudanese Pound',
+                  'STD': 'São Tomé and Príncipe Dobra (pre-2018)',
+                  'STN': 'São Tomé and Príncipe Dobra',
+                  'STR': 'Stellar',
                   'SVC': 'Salvadoran Colón',
                   'SYP': 'Syrian Pound',
                   'SZL': 'Swazi Lilangeni',
@@ -175,7 +196,7 @@ class Currency:
                   'TJS': 'Tajikistani Somoni',
                   'TMT': 'Turkmenistani Manat',
                   'TND': 'Tunisian Dinar',
-                  'TOP': 'Tongan Paʻanga',
+                  'TOP': "Tongan Pa'anga",
                   'TRY': 'Turkish Lira',
                   'TTD': 'Trinidad and Tobago Dollar',
                   'TWD': 'New Taiwan Dollar',
@@ -185,21 +206,29 @@ class Currency:
                   'USD': 'United States Dollar',
                   'UYU': 'Uruguayan Peso',
                   'UZS': 'Uzbekistan Som',
-                  'VEF': 'Venezuelan Bolívar Fuerte',
-                  'VES': 'Sovereign Bolivar',
+                  'VEF': 'Venezuelan Bolívar Fuerte (Old)',
+                  'VEF_BLKMKT': 'Venezuelan Bolívar (Black Market)',
+                  'VEF_DICOM': 'Venezuelan Bolívar (DICOM)',
+                  'VEF_DIPRO': 'Venezuelan Bolívar (DIPRO)',
+                  'VES': 'Venezuelan Bolívar Soberano',
                   'VND': 'Vietnamese Dong',
+                  'VTC': 'VertCoin',
                   'VUV': 'Vanuatu Vatu',
                   'WST': 'Samoan Tala',
                   'XAF': 'CFA Franc BEAC',
-                  'XAG': 'Silver (troy ounce)',
-                  'XAU': 'Gold (troy ounce)',
+                  'XAG': 'Silver Ounce',
+                  'XAU': 'Gold Ounce',
                   'XCD': 'East Caribbean Dollar',
                   'XDR': 'Special Drawing Rights',
+                  'XMR': 'Monero',
                   'XOF': 'CFA Franc BCEAO',
+                  'XPD': 'Palladium Ounce',
                   'XPF': 'CFP Franc',
+                  'XPM': 'Primecoin',
+                  'XPT': 'Platinum Ounce',
+                  'XRP': 'Ripple',
                   'YER': 'Yemeni Rial',
                   'ZAR': 'South African Rand',
-                  'ZMK': 'Zambian Kwacha (pre-2013)',
                   'ZMW': 'Zambian Kwacha',
                   'ZWL': 'Zimbabwean Dollar'}
 
@@ -218,6 +247,6 @@ class Currency:
 
 
 if __name__ == "__main__":
-    pprint(Currency.get_all_currencies())
-    price = CryptoConverter.get_price("USD", "RUB", "2")
+    # pprint(Currency.get_all_currencies())
+    price = CryptoConverter.get_price("USD", "R")
     print(price)

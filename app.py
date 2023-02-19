@@ -7,9 +7,13 @@ import redis
 red = redis.Redis(host='localhost', port=6379)
 bot = telebot.TeleBot(TOKEN)
 
+global symbols
+
 
 @bot.message_handler(commands=['start', 'help'])
 def handle_start_help(message: telebot.types.Message):
+    global symbols
+    symbols = CryptoConverter.get_currencies()
     text = f"HELLO, {message.chat.username}!\n" \
            "I'm ChatBot where You can convert currencies!\n\n" \
            "Insert currencies to exchange in following format (in one line): \n" \
@@ -23,18 +27,28 @@ def handle_start_help(message: telebot.types.Message):
     bot.reply_to(message, text)
 
 
+
 @bot.message_handler(commands=["values"])
 def handle_values(message: telebot.types.Message):
     text = "Available currencies:\n\n"
-    for abbreviation, full_name in Currency.currencies.items():
-        text += f' {abbreviation} - {full_name}\n'
-    bot.reply_to(message, text)
+    global symbols
+    for symbol, info in symbols.items():
+        text += symbol + f' - {info.get("description")}\n'
+    if len(text) > 4095:
+        for x in range(0, len(text), 4095):
+            bot.reply_to(message, text=text[x:x + 4095])
+    else:
+        bot.reply_to(message, text)
 
 
 @bot.message_handler(commands=["popular_currencies"])
 def get_popular_currencies(message: telebot.types.Message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    if len(red.keys()) <= 6:
+    if len(red.keys()) == 0:
+        bot.reply_to(message, "You have not used yet any.\nTry for example:\n")
+        buttons = [telebot.types.KeyboardButton("EUR USD 1"), telebot.types.KeyboardButton("USD RUB 1")]
+        markup.add(*buttons)
+    if 0 < len(red.keys()) <= 6:
         buttons = [telebot.types.KeyboardButton(key.decode() + " 1") for key in red.keys()]
         markup.add(*buttons)
     if len(red.keys()) > 6:
@@ -52,7 +66,7 @@ def convert(message: telebot.types.Message):
         if len(values) != 3:
             raise APIException("Wrong parameters quantity.")
         quote, base, amount = values
-        price = CryptoConverter.get_price(quote, base, amount)
+        price = CryptoConverter.get_price(quote, base)
     except APIException as e:
         bot.reply_to(message, f"User mistake.\n{e}")
     except Exception as e:
@@ -60,14 +74,14 @@ def convert(message: telebot.types.Message):
     else:
         text = f"Pricing {amount} " \
                f"{Currency.currencies.get(quote)} ({quote}) in " \
-               f"{Currency.currencies.get(base)} ({base}) - {round(price, 2)}"
+               f"{Currency.currencies.get(base)} ({base}) - {round(price * int(amount), 2)}"
         bot.send_message(message.chat.id, text)
 
-        redis_data = red.get(f"{quote} {base}")
-        if not redis_data:
+        used_pairs = red.get(f"{quote} {base}")
+        if not used_pairs:
             red.set(f"{quote} {base}", 1)
         else:
-            red.set(f"{quote} {base}", int(redis_data.decode()) + 1)
+            red.set(f"{quote} {base}", int(used_pairs.decode()) + 1)
 
 
 bot.polling(none_stop=True, interval=0)
