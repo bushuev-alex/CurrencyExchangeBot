@@ -1,6 +1,6 @@
 import telebot
 from config import TOKEN
-from extensions import CryptoConverter, Currency, APIException
+from extensions import CryptoConverter, APIException
 import redis
 
 
@@ -26,7 +26,11 @@ def handle_start_help(message: telebot.types.Message):
            "/popular_currencies - top 6 hottest pairs queries"
     bot.reply_to(message, text)
 
-
+def small_helper(message: telebot.types.Message):
+    text = f"/start or /help - instructions.\n" \
+            "/values - available currencies\n" \
+            "/popular_currencies - top 6 hottest pairs queries"
+    bot.send_message(message.from_user.id, text)
 
 @bot.message_handler(commands=["values"])
 def handle_values(message: telebot.types.Message):
@@ -39,11 +43,12 @@ def handle_values(message: telebot.types.Message):
             bot.reply_to(message, text=text[x:x + 4095])
     else:
         bot.reply_to(message, text)
-
+    small_helper(message)
 
 @bot.message_handler(commands=["popular_currencies"])
 def get_popular_currencies(message: telebot.types.Message):
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    # markup = telebot.types.InlineKeyboardMarkup()
     if len(red.keys()) == 0:
         bot.reply_to(message, "You have not used yet any.\nTry for example:\n")
         buttons = [telebot.types.KeyboardButton("EUR USD 1"), telebot.types.KeyboardButton("USD RUB 1")]
@@ -57,10 +62,12 @@ def get_popular_currencies(message: telebot.types.Message):
         buttons = [telebot.types.KeyboardButton(pair[1] + " 1") for pair in pairs]
         markup.add(*buttons[:6])
     bot.send_message(message.from_user.id, "Popular currencies", reply_markup=markup)
+    small_helper(message)
 
 
 @bot.message_handler(content_types=["text"])
 def convert(message: telebot.types.Message):
+    global symbols
     try:
         values = message.text.split()
         if len(values) != 3:
@@ -73,8 +80,8 @@ def convert(message: telebot.types.Message):
         bot.reply_to(message, f"Wrong command. Unable to continue.\n{e}")
     else:
         text = f"Pricing {amount} " \
-               f"{Currency.currencies.get(quote)} ({quote}) in " \
-               f"{Currency.currencies.get(base)} ({base}) - {round(price * int(amount), 2)}"
+               f"{symbols.get(quote)['description']} ({quote}) in " \
+               f"{symbols.get(base)['description']} ({base}) - {round(price * int(amount), 2)}"
         bot.send_message(message.chat.id, text)
 
         used_pairs = red.get(f"{quote} {base}")
