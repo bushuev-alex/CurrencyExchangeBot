@@ -45,6 +45,7 @@ def handle_values(message: telebot.types.Message):
         bot.reply_to(message, text)
     small_helper(message)
 
+
 @bot.message_handler(commands=["popular_currencies"])
 def get_popular_currencies(message: telebot.types.Message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
