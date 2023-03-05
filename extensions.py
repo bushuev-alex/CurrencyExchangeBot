@@ -4,6 +4,7 @@ from config import APILAYER_API_KEY, OPENEXCHANGERATES_API
 from pprint import pprint
 
 
+
 class APIException(Exception):
     pass
 
@@ -18,7 +19,7 @@ class CryptoConverter:
         if quote == base:
             raise APIException(f"Impossible to exchange equal currencies ({quote} vs {base})")
 
-        URL = f"https://api.exchangerate.host/convert?from={quote}&to={base}"
+        URL = f"https://api.exchangerate.host/convert?from={quote}&to={base}"  # popular_currencies
 
         r = requests.get(URL)
         # print(json.loads(r.content))
@@ -52,7 +53,25 @@ class CryptoConverter:
             raise APIException(json.loads(r.content)["message"])
 
 
+    @staticmethod
+    def get_timeseries(date_from: str, date_to: str, quote: str, base: str = "USD"):
+        url = f'https://api.exchangerate.host/timeseries?' \
+              f'base={base}&' \
+              f'symbols={quote}&' \
+              f'start_date={date_from}&' \
+              f'end_date={date_to}'
+        response = requests.get(url)
+        data = response.json()
+        return data
+
+
+
 if __name__ == "__main__":
     # pprint(Currency.get_all_currencies())
-    price = CryptoConverter.get_price("USD", "R")
-    print(price)
+    # price = CryptoConverter.get_price("USD", "RUB")
+    CryptoConverter.get_timeseries('2023-02-01', '2023-02-20', 'USD', 'XAU')
+    #pprint(list(time_series.get('rates').keys()))
+    #pprint(list(time_series.get('rates').values()))
+
+
+
