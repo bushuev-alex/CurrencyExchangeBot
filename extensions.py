@@ -1,6 +1,5 @@
 import requests
 import json
-from config import APILAYER_API_KEY
 from exceptions import APIException
 from pprint import pprint
 import re
@@ -17,9 +16,20 @@ def parse_message_text(values: str) -> str:
 
 
 class CryptoConverter:
-
-    def __init__(self):
-        pass
+    START_HELP_TEXT = "HELLO, {}!\n" \
+                      f"I'm ChatBot where You can: \n" \
+                      f"1. Convert currencies \n" \
+                      f"2. Get timeseries data to currency pairs!\n\n" \
+                      f"To get exchange rate: \nInsert currencies in following format (in one line): \n" \
+                      f"<currency to get> " \
+                      f"<currency to exchange> " \
+                      f"<amount to get>\n\n" \
+                      f"Example:\n\nEUR USD 1\n\n\n" \
+                      f"To get graphic image with timeseries data: \n" \
+                      f"Insert dates and currencies in following format (in one line):\n" \
+                      f"<date_from> <date_to> <currency quote> <currency base>\n\n" \
+                      f"Example:\n\n" \
+                      f"2023-01-01 2023-03-06 EUR USD\n"
 
     @staticmethod
     def get_price(quote: str, base: str):
@@ -39,26 +49,24 @@ class CryptoConverter:
             raise APIException(json.loads(r.content)["message"])
 
     @staticmethod
-    def get_currencies():
+    def get_currencies() -> dict:
         url = 'https://api.exchangerate.host/symbols'
         response = requests.get(url)
         data = response.json()
         return data['symbols']
 
-
-    @staticmethod
-    def get_all_currencies():
-        URL = f"https://api.apilayer.com/currency_data/list"
-        headers = {"apikey": APILAYER_API_KEY}
-        r = requests.get(url=URL, headers=headers)
-        if r.status_code == 200:
-            if json.loads(r.content).get("success"):
-                return json.loads(r.content).get("currencies")
-            else:
-                raise APIException(json.loads(r.content)["error"]["info"])
-        else:
-            raise APIException(json.loads(r.content)["message"])
-
+    # @staticmethod
+    # def get_all_currencies() -> dict:
+    #     URL = f"https://api.apilayer.com/currency_data/list"
+    #     headers = {"apikey": APILAYER_API_KEY}
+    #     r = requests.get(url=URL, headers=headers)
+    #     if r.status_code == 200:
+    #         if json.loads(r.content).get("success"):
+    #             return json.loads(r.content).get("currencies")
+    #         else:
+    #             raise APIException(json.loads(r.content)["error"]["info"])
+    #     else:
+    #         raise APIException(json.loads(r.content)["message"])
 
     @staticmethod
     def get_timeseries(date_from: str, date_to: str, quote: str, base: str = "USD"):
@@ -68,10 +76,7 @@ class CryptoConverter:
               f'start_date={date_from}&' \
               f'end_date={date_to}'
         response = requests.get(url)
-        #print(response.status_code)
         data = response.json()
-        pprint(data)
-        #return data
         df = pd.DataFrame(data=list(data.get('rates').values()))
         df.columns = [base]
         df["date"] = list(data.get('rates').keys())
@@ -81,13 +86,11 @@ class CryptoConverter:
         ax.figure.savefig('output.png')
 
 
-
 if __name__ == "__main__":
     # pprint(Currency.get_all_currencies())
     # price = CryptoConverter.get_price("USD", "RUB")
-    CryptoConverter.get_timeseries('2052-03-07', '2023-03-05', 'USD', 'AUD')
-    #pprint(list(time_series.get('rates').keys()))
-    #pprint(list(time_series.get('rates').values()))
-
-
-
+    CryptoConverter.get_timeseries('2022-03-07', '2023-03-05', 'USD', 'AUD')
+    # pprint(list(time_series.get('rates').keys()))
+    # pprint(list(time_series.get('rates').values()))
+    # curr = CryptoConverter.get_all_currencies()
+    # print(curr)

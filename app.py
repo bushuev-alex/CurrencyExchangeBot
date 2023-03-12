@@ -1,5 +1,5 @@
 import telebot
-from config import TOKEN, START_HELP_TEXT
+from tokens import TELEG_TOKEN
 from extensions import CryptoConverter, parse_message_text
 from exceptions import APIException
 import redis
@@ -13,7 +13,7 @@ logging.basicConfig(filename='log.txt',
 logger = logging.getLogger(__name__)
 
 red = redis.Redis(host='localhost', port=6379)
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(TELEG_TOKEN)
 
 symbols = CryptoConverter.get_currencies()
 
@@ -22,7 +22,7 @@ symbols = CryptoConverter.get_currencies()
 def handle_start_help(message: telebot.types.Message):
     print(f"User {message.from_user.username} joined the bot")
     logger.info(f"User {message.from_user.username} joined the bot")
-    text = START_HELP_TEXT.format(message.chat.username)
+    text = CryptoConverter.START_HELP_TEXT.format(message.chat.username)
     bot.reply_to(message, text)
     inline_keyboards(message)
 
@@ -36,7 +36,7 @@ def inline_keyboards(message):
     bot.send_message(chat_id=message.from_user.id, text="Menu:", reply_markup=reply_markup)
 
 
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
+def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None) -> list:
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
     if header_buttons:
         menu.insert(0, header_buttons)
@@ -50,7 +50,7 @@ def process_callback(callback_query: telebot.types.CallbackQuery):
     code = callback_query.data
     logger.info(f"{code} button is pressed by user {callback_query.from_user.username}")
     if code in ['/start', '/help']:
-        text = START_HELP_TEXT.format(callback_query.from_user.username)
+        text = CryptoConverter.START_HELP_TEXT.format(callback_query.from_user.username)
         bot.send_message(callback_query.from_user.id, text=text)
     if code == '/values':
         text = "Available currencies:\n\n"
