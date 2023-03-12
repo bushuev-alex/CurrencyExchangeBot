@@ -4,6 +4,7 @@ from exceptions import APIException
 from pprint import pprint
 import re
 import pandas as pd
+import datetime
 
 
 def parse_message_text(values: str) -> str:
@@ -29,7 +30,8 @@ class CryptoConverter:
                       f"Insert dates and currencies in following format (in one line):\n" \
                       f"<date_from> <date_to> <currency quote> <currency base>\n\n" \
                       f"Example:\n\n" \
-                      f"2023-01-01 2023-03-06 EUR USD\n"
+                      f"{datetime.datetime.now().replace(year=datetime.datetime.now().year - 1).date()} " \
+                      f"{datetime.datetime.now().date()} EUR USD\n"
 
     @staticmethod
     def get_price(quote: str, base: str):
@@ -39,7 +41,7 @@ class CryptoConverter:
         URL = f"https://api.exchangerate.host/convert?from={quote.upper()}&to={base.upper()}"  # popular_currencies
 
         r = requests.get(URL)
-        # print(json.loads(r.content))
+        print(json.loads(r.content))
         if r.status_code == 200:
             if json.loads(r.content).get("success"):
                 return json.loads(r.content).get("result")
@@ -88,8 +90,8 @@ class CryptoConverter:
 
 if __name__ == "__main__":
     # pprint(Currency.get_all_currencies())
-    # price = CryptoConverter.get_price("USD", "RUB")
-    CryptoConverter.get_timeseries('2022-03-07', '2023-03-05', 'USD', 'AUD')
+    price = CryptoConverter.get_price("aaaa", "RUB")
+    # CryptoConverter.get_timeseries('2022-03-07', '2023-03-05', 'USD', 'XXX')
     # pprint(list(time_series.get('rates').keys()))
     # pprint(list(time_series.get('rates').values()))
     # curr = CryptoConverter.get_all_currencies()
