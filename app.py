@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 red = redis.Redis(host='localhost', port=6379)
 bot = telebot.TeleBot(TELEG_TOKEN)
 
-symbols = CryptoConverter.get_currencies()
+symbols: dict = CryptoConverter.get_currencies()
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -56,7 +56,7 @@ def process_callback(callback_query: telebot.types.CallbackQuery):
         text = "Available currencies:\n\n"
         global symbols
         for symbol, info in symbols.items():
-            text += symbol + f' - {info.get("description")}\n'
+            text += symbol + ' - ' + info + '\n'
         if len(text) > 4095:
             for x in range(0, len(text), 4095):
                 bot.send_message(callback_query.from_user.id, text=text[x:x + 4095])
@@ -99,8 +99,8 @@ def convert(message: telebot.types.Message):
             logger.info(f"User {message.from_user.username} query to exchange: {quote} {base} {amount}")
             price = CryptoConverter.get_price(quote, base)
             text = f"Pricing {amount} " \
-                   f"{symbols.get(quote)['description']} ({quote}) in " \
-                   f"{symbols.get(base)['description']} ({base}) - {round(price * int(amount), 2)}"
+                   f"{symbols.get(quote)} ({quote}) in " \
+                   f"{symbols.get(base)} ({base}) - {round(price * int(amount), 2)}"
             bot.send_message(message.chat.id, text)
             logger.info(f"Answer was sent to user {message.from_user.username}: {text}")
             used_pairs = red.get(f"{quote} {base}")
