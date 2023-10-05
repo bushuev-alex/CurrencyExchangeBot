@@ -1,7 +1,7 @@
 import telebot
 from tokens import TELEG_TOKEN
 from extensions import CryptoConverter, parse_message_text
-from exceptions import APIException
+from exceptions import APIException, DataFrameException
 import redis
 import logging
 
@@ -117,6 +117,9 @@ def convert(message: telebot.types.Message):
             logger.info(f"Image was sent to user {message.from_user.username}.")
             inline_keyboards(message)
     except APIException as e:
+        logger.error(APIException(f"User mistake. {e}"))
+        bot.reply_to(message, f"User mistake.\n{e}")
+    except DataFrameException as e:
         logger.error(APIException(f"User mistake. {e}"))
         bot.reply_to(message, f"User mistake.\n{e}")
     except Exception as e:

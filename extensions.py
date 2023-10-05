@@ -1,6 +1,6 @@
 import requests
 import json
-from exceptions import APIException
+from exceptions import APIException, DataFrameException
 from pprint import pprint
 import re
 import pandas as pd
@@ -46,12 +46,11 @@ class CryptoConverter:
                f"&amount=1")
 
         r = requests.get(URL)
-        # print(json.loads(r.content))
         if r.status_code == 200:
             if json.loads(r.content).get("success"):
                 return json.loads(r.content).get("result")
             else:
-                raise APIException(json.loads(r.content)["error"]["info"])
+                raise APIException(json.loads(r.content).get("error").get("info"))
         else:
             raise APIException(json.loads(r.content)["message"])
 
@@ -71,21 +70,32 @@ class CryptoConverter:
                f'&end_date={date_to}'
                f'&source={base}')
         response = requests.get(url)
-        data = response.json()
-        pprint(data)
-        df = pd.DataFrame(data=list(data.get('quotes').values()))
-        df.columns = [base]
-        df["date"] = list(data.get('quotes').keys())
-        df["date"] = df.date.apply(pd.to_datetime)
-        df.set_index('date', inplace=True)
-        ax = df.plot(kind='line', use_index=True, title=f"{base}/{quote}", grid=True, legend=True)
-        ax.figure.savefig('output.png')
+        if response.status_code == 200:
+            data = response.json()
+            # pprint(data)
+            if data.get('success'):
+                if not all(data.get('quotes').values()):
+                    raise APIException(f"Wrong query params in quote: '{quote}'")
+                try:
+                    df = pd.DataFrame(data=list(data.get('quotes').values()))
+                    df.columns = [base]
+                    df["date"] = list(data.get('quotes').keys())
+                    df["date"] = df.date.apply(pd.to_datetime)
+                    df.set_index('date', inplace=True)
+                    ax = df.plot(kind='line', use_index=True, title=f"{base}/{quote}", grid=True, legend=True)
+                    ax.figure.savefig('output.png')
+                except Exception as e:
+                    raise DataFrameException(e)
+            else:
+                raise APIException(data.get("error").get("type") + "\n" + data.get("error").get("info"))
+        else:
+            raise APIException(json.loads(response.content)["message"])
 
 
 if __name__ == "__main__":
     # pprint(Currency.get_all_currencies())
     # price = CryptoConverter.get_price("USD", "RUB")
-    res = CryptoConverter.get_timeseries('2023-09-01', '2023-10-05', 'USD', 'EUR')
+    res = CryptoConverter.get_timeseries('2023-10-01', '2023-10-05', 'USD', 'EUR')
     # pprint(list(time_series.get('rates').keys()))
     # pprint(list(time_series.get('rates').values()))
     # curr = CryptoConverter.get_all_currencies()
