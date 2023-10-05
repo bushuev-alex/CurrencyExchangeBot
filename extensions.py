@@ -75,7 +75,10 @@ class CryptoConverter:
             # pprint(data)
             if data.get('success'):
                 if not all(data.get('quotes').values()):
-                    raise APIException(f"Wrong query params in quote: '{quote}'")
+                    msg = ("Invalid_source_currency. \n"
+                           f"You have supplied an invalid Source Currency '{quote}'. \n"
+                           f"[Example: source=EUR]")
+                    raise APIException(msg)
                 try:
                     df = pd.DataFrame(data=list(data.get('quotes').values()))
                     df.columns = [base]
