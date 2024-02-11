@@ -1,7 +1,7 @@
 import telebot
 from tokens import TELEG_TOKEN
 from extensions import CryptoConverter, parse_message_text
-from exceptions import APIException, DataFrameException
+from exceptions import APIException, DataFrameException, RedisResponseException
 import redis
 import logging
 
@@ -73,8 +73,15 @@ def process_callback(callback_query: telebot.types.CallbackQuery):
             buttons = [telebot.types.KeyboardButton(key.decode() + " 1") for key in red.keys()]
             markup.add(*buttons)
         if len(red.keys()) > 6:
-            pairs = [(int((red.get(key).decode())), key.decode()) for key in red.keys()]
-            pairs.sort(reverse=True)
+            print(red.keys())
+            # print(red.get('_kombu.binding.celeryev').decode())
+            pairs = []
+            for key in red.keys():
+                try:
+                    pairs.append((int((red.get(key).decode())), key.decode()))
+                except Exception as e:
+                    print(e)
+                    continue
             buttons = [telebot.types.KeyboardButton(pair[1] + " 1") for pair in pairs]
             markup.add(*buttons[:6])
         bot.send_message(callback_query.from_user.id, "Popular exchange pairs", reply_markup=markup)
